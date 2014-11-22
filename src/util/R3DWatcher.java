@@ -39,7 +39,7 @@ public class R3DWatcher {
                     List<WatchEvent<?>> watchEvents = watchKey.pollEvents();
                     for (WatchEvent watchEvent : watchEvents) {
                         if (watchEvent.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                            listeners.stream().forEach(a -> a.onNewLogFile());
+                            listeners.stream().forEach(a -> a.onNewLogFile(watchEvent.context().toString()));
                         }
                     }
                 }

@@ -1,25 +1,29 @@
 package main;
 
+import LogParser.LogParser;
+import ViewModel.GameViewModel;
+import dto.Game.Game;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import util.Logger;
 import util.R3DLogFolderListener;
 import util.R3DWatcher;
 
 import java.io.IOException;
-import java.nio.file.*;
+
 
 public class Main extends Application implements R3DLogFolderListener {
 
     private static Stage primaryStage;
 
     @Override
-    public void start(Stage primaryStage) throws Exception{
+    public void start(Stage primaryStage) throws Exception {
         this.primaryStage = primaryStage;
-        setScene(Scenes.mainScene);
+        setScene(Scenes.mainScene, null);
         primaryStage.setTitle("DraNotes");
 
         R3DWatcher r3DWatcher = new R3DWatcher();
@@ -34,23 +38,36 @@ public class Main extends Application implements R3DLogFolderListener {
     }
 
     @Override
-    public void onNewLogFile() {
-        setScene(Scenes.gameScene);
-        //globaal bereikbaar viewmodel aanpassen met de 10 mensen
-        //gamescene kent dit viewmodel
+    public void onNewLogFile(String file) {
+        GameViewModel gameViewModel = new GameViewModel();
+        GameController gameController = new GameController(gameViewModel);
+        setScene(Scenes.gameScene, gameController);
+        Logger.info("new log file found");
+        try {
+            new LogParser(file, gameViewModel).parse();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
-    public static void setScene(String sceneName){
+    public static void setScene(String sceneName, Object controller) {
         Platform.runLater(() -> {
+
+            FXMLLoader loader = new FXMLLoader(Main.class.getResource(sceneName));
+            if (controller != null) {
+                loader.setController(controller);
+            }
             try {
-                Parent root = FXMLLoader.load(Main.class.getResource(sceneName));
+                loader.load();
+                Parent root = loader.getRoot();
                 Scene scene = new Scene(root);
                 primaryStage.setScene(scene);
                 primaryStage.show();
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
+
         });
     }
 }
